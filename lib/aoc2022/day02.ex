@@ -62,7 +62,7 @@ defmodule Aoc2022.Day02 do
   end
 
   def part_two (input) do
-    IO.inspect input
+    input
       |> fmt
       |> Enum.map(&play2/1)
       |> Enum.sum()
