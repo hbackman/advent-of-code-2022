@@ -47,7 +47,7 @@ defmodule Aoc2022.Day03 do
     Enum.find_index(@alphabet, & &1 == item) + 1
   end
 
-  def part_one (input) do
+  def part_one(input) do
     input
       |> fmt
       |> Enum.map(&get_shared/1)
@@ -60,7 +60,7 @@ defmodule Aoc2022.Day03 do
   # Part Two
   # --------------------------------------------------
 
-  def part_two (input) do
+  def part_two(input) do
     input
       |> fmt
       |> Enum.chunk_every(3)

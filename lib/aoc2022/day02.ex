@@ -41,7 +41,7 @@ defmodule Aoc2022.Day02 do
     match_score(m[r]) + shape_score(r)
   end
 
-  def part_one (input) do
+  def part_one(input) do
     input
       |> fmt
       |> Enum.map(&play/1)
@@ -61,7 +61,7 @@ defmodule Aoc2022.Day02 do
     play({l, m[r]})
   end
 
-  def part_two (input) do
+  def part_two(input) do
     input
       |> fmt
       |> Enum.map(&play2/1)

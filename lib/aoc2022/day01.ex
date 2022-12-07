@@ -14,7 +14,7 @@ defmodule Aoc2022.Day01 do
   # Part One
   # --------------------------------------------------
 
-  def part_one (input) do
+  def part_one(input) do
     input
       |> fmt
       |> Enum.map(& Enum.sum(&1))
@@ -25,7 +25,7 @@ defmodule Aoc2022.Day01 do
   # Part Two
   # --------------------------------------------------
 
-  def part_two (input) do
+  def part_two(input) do
     input
       |> fmt
       |> Enum.map(& Enum.sum(&1))
