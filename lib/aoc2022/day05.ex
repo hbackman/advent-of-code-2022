@@ -1,7 +1,7 @@
 defmodule Aoc2022.Day05 do
 
-  defp init_view(view) do
-    {map, leg} = String.split(view, ~r/\R/)
+  defp init_config(string) do
+    {map, leg} = String.split(string, ~r/\R/)
       |> Enum.split(-1)
 
     len = leg
@@ -16,31 +16,15 @@ defmodule Aoc2022.Day05 do
     end)
   end
 
-  defp draw_view(view) do
-    Enum.each(view, fn {idx, crates} ->
-      IO.write idx
-      IO.write " "
-
-      crates
-        |> Enum.reverse()
-        |> Enum.each(& IO.write &1)
-
-      IO.puts ""
-    end)
-    IO.puts "---------"
-
-    view
-  end
-
   defp init_inst(inst) do
-    Regex.scan(~r/(\d).*(\d).*(\d)/, inst, capture: :all_but_first)
+    Regex.scan(~r/(\d+).*(\d+).*(\d+)/, inst, capture: :all_but_first)
   end
 
   defp format(input) do
-    [view, inst] = String.split(input, ~r/\R\R/)
+    [config, instructions] = String.split(input, ~r/\R\R/)
     {
-      init_view(view),
-      init_inst(inst),
+      init_config(config),
+      init_inst(instructions),
     }
   end
 
@@ -48,49 +32,49 @@ defmodule Aoc2022.Day05 do
   # Part One
   # --------------------------------------------------
 
-  defp move(view, f, t) do
-    crate = List.first(view[f])
-
-    if crate do
-      view
-        |> Map.put(t, [crate | view[t]])
-        |> Map.put(f, Enum.drop(view[f], 1))
-    else
-      IO.inspect "CRATE MISSING"
-      IO.inspect [f, t]
-      IO.inspect view
-    end
+  defp arrange(config, count, f, t) do
+    crates = Enum.take(config[f], count)
+      |> Enum.reverse()
+    config
+      |> Map.put(t, crates ++ config[t])
+      |> Map.put(f, Enum.drop(config[f], count))
   end
 
-  defp handle({ view, [] }), do: view
+  defp handle({ config, [] }, _), do: config
 
-  defp handle({ view, [inst | tail] }) do
-    [n, f, t] = inst
-      |> Enum.map(&String.to_integer/1)
+  defp handle({ config, [i | instructions] }, func) do
+    [n, f, t] = Enum.map(i, &String.to_integer/1)
 
-    IO.inspect view
+    config = func.(config, n, f, t)
 
-    view = Enum.reduce(1..n, view, fn _, acc ->
-      move(acc, f, t)
-    end)
-
-    handle({ view, tail })
+    handle({ config, instructions }, func)
   end
 
   def part_one(input) do
     input
       |> format
-      |> handle
-      #|> Enum.map(fn {_, list} -> List.first(list) end)
-      #|> Enum.join()
+      |> handle(&arrange/4)
+      |> Enum.map(fn {_, list} -> List.first(list) end)
+      |> Enum.join()
   end
 
   # --------------------------------------------------
   # Part Two
   # --------------------------------------------------
 
+  defp arrange2(config, count, f, t) do
+    crates = Enum.take(config[f], count)
+    config
+    |> Map.put(t, crates ++ config[t])
+    |> Map.put(f, Enum.drop(config[f], count))
+  end
+
   def part_two(input) do
     input
+      |> format
+      |> handle(&arrange2/4)
+      |> Enum.map(fn {_, list} -> List.first(list) end)
+      |> Enum.join()
   end
 
 end
