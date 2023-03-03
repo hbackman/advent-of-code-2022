@@ -1,4 +1,4 @@
-defmodule Aoc2022.Day06Test do
+defmodule Aoc2022.Day07Test do
 
   use ExUnit.Case, async: true
 
