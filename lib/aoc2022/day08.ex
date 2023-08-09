@@ -1,5 +1,5 @@
 defmodule Aoc2022.Day08 do
-  
+
   defp format(input) do
     input
       |> String.split("", trim: true)
@@ -8,10 +8,11 @@ defmodule Aoc2022.Day08 do
       |> Enum.map(& Enum.map(&1, fn s -> String.to_integer(s) end))
   end
 
-  defp size(map), do: {
-    Enum.count(Enum.at(map, 0)),
-    Enum.count(map),
-  }
+  defp bounds(map) do
+    w = Enum.count(Enum.at(map, 0))
+    h = Enum.count(map)
+    {0, 0, w - 1, h - 1}
+  end
 
   defp height(map, {x, y}) do
     map
@@ -23,72 +24,58 @@ defmodule Aoc2022.Day08 do
   # Part One
   # --------------------------------------------------
 
-  # Check if a position is inside the map.
-  defp inside?(map, {x, y}) do
-    {xlen, ylen} = size(map)
-
-    (y >= 1 and y < xlen-1) and
-    (x >= 1 and x < ylen-1)
+  defp scan(map, range, :x, y) do
+    range
+      |> Enum.map(& height(map, {&1, y}))
+      |> Enum.max()
   end
 
-  defp ray(map, :x, y, range) do
-    {xlen, _} = size(map)
-    {_, data} = Enum.reduce(range, {0, []}, fn x, {current, visible} ->
-      height = height(map, {x, y})
-      {
-        max(height, current),
-        if height > current do
-          [{x, y} | visible]
-        else
-          visible
-        end
-      }
-    end)
-    data
+  defp scan(map, range, :y, x) do
+    range
+      |> Enum.map(& height(map, {x, &1}))
+      |> Enum.max()
   end
 
-  defp ray(map, :y, x, range) do
-    {_, ylen} = size(map)
-    {_, data} = Enum.reduce(range, {0, []}, fn y, {current, visible} ->
-      height = height(map, {x, y})
-      {
-        max(height, current),
-        if height > current do
-          [{x, y} | visible]
-        else
-          visible
-        end
-      }
-    end)
-    data
+  defp visible?(map, {x, y}) do
+    {xmin, ymin, xmax, ymax} = bounds(map)
+
+    if x == xmin or x == xmax or y == ymin or y == ymax do
+      true
+    else
+      h = height(map, {x, y})
+
+      l = scan(map, xmin..(x-1), :x, y)
+      r = scan(map, (x+1)..xmax, :x, y)
+
+      t = scan(map, ymin..(y-1), :y, x)
+      b = scan(map, (y+1)..ymax, :y, x)
+
+      l < h or r < h or t < h or b < h
+    end
   end
 
-  # Search the map for all visible trees.
   defp search(map) do
-    {xlen, ylen} = size(map)
+    {xmin, ymin, xmax, ymax} = bounds(map)
 
-    Enum.map(1..(ylen-2), & ray(map, :x, &1, 0..(xlen-1))) ++ # Left -> Right
-    Enum.map(1..(xlen-2), & ray(map, :y, &1, 0..(ylen-1))) ++ # Top -> Bottom
-    Enum.map(1..(ylen-2), & ray(map, :x, &1, (xlen-1)..0)) ++ # Right -> Left
-    Enum.map(1..(xlen-2), & ray(map, :y, &1, (ylen-1)..0))    # Bottom -> Top
-      |> List.flatten()
-      |> Enum.uniq()
-      |> Enum.filter(& inside?(map, &1))
+    visible = (for x <- xmin..xmax, y <- ymin..ymax, do: {x, y})
+      |> Enum.map(& if (visible?(map, &1)), do: 1, else: 0)
+      |> Enum.sum()
+
+    IO.inspect visible
   end
 
   def part_one(input) do
     input
       |> format
       |> search
-      |> Enum.count()
   end
-  
+
   # --------------------------------------------------
   # Part Two
   # --------------------------------------------------
-  
+
   def part_two(input) do
     input
   end
-    
+
 end

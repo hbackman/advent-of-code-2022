@@ -51,9 +51,6 @@ defmodule Aoc2022.Day07 do
       |> Enum.map(& String.split(&1, ~r/\R/, trim: true))
   end
 
-  defp parse(input),
-    do: String.split(input, " ", trim: true)
-
   defp reduce([], env), do: env
 
   defp reduce([h | t], env) do
@@ -105,11 +102,11 @@ defmodule Aoc2022.Day07 do
       |> Enum.map(& elem(&1, 2))
       |> Enum.sum()
   end
-  
+
   # --------------------------------------------------
   # Part Two
   # --------------------------------------------------
-  
+
   def part_two(input) do
     env = input
       |> format()
@@ -124,5 +121,5 @@ defmodule Aoc2022.Day07 do
       |> Enum.sort(&(&1 >= &2))
       |> Enum.min()
   end
-    
+
 end
