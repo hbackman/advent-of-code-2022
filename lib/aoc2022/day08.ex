@@ -57,11 +57,9 @@ defmodule Aoc2022.Day08 do
   defp search(map) do
     {xmin, ymin, xmax, ymax} = bounds(map)
 
-    visible = (for x <- xmin..xmax, y <- ymin..ymax, do: {x, y})
+    (for x <- xmin..xmax, y <- ymin..ymax, do: {x, y})
       |> Enum.map(& if (visible?(map, &1)), do: 1, else: 0)
       |> Enum.sum()
-
-    IO.inspect visible
   end
 
   def part_one(input) do
@@ -74,8 +72,46 @@ defmodule Aoc2022.Day08 do
   # Part Two
   # --------------------------------------------------
 
+  defp scan_visible(map, range, :x, y),
+    do: _scan_visible(Enum.map(range, & height(map, {&1, y})))
+
+  defp scan_visible(map, range, x, :y),
+    do: _scan_visible(Enum.map(range, & height(map, {x, &1})))
+
+  defp _scan_visible([tree | range]) do
+    Enum.reduce_while(range, 0, fn other_tree, acc ->
+      if other_tree < tree,
+        do: {:cont, acc + 1},
+      else: {:halt, acc + 1}
+    end)
+  end
+
+  defp scenic_score(map, {x, y}) do
+    {xmin, ymin, xmax, ymax} = bounds(map)
+
+    directions = [
+      {y..ymin, x, :y},
+      {y..ymax, x, :y},
+      {x..xmin, :x, y},
+      {x..xmax, :x, y},
+    ]
+
+    directions
+      |> Enum.map(fn {r, x, y} -> scan_visible(map, r, x, y) end)
+      |> Enum.product()
+  end
+
+  defp search2(map) do
+    {xmin, ymin, xmax, ymax} = bounds(map)
+
+    (for x <- xmin..xmax, y <- ymin..ymax, do: scenic_score(map, {x, y}))
+      |> Enum.max()
+  end
+
   def part_two(input) do
     input
+      |> format
+      |> search2
   end
 
 end
