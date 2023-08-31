@@ -23,9 +23,19 @@ defmodule Aoc2022.Day09 do
   defmodule Rope do
     defstruct [
       head: {0, 0},
-      tail: {0, 0},
+      tails: [],
       hist: [],
     ]
+
+    @doc """
+    Create a new rope with 'n' number of knots.
+    """
+    def new(num_tails \\ 1) do
+      %Rope{
+        head: {0, 0},
+        tails: List.duplicate({0, 0}, num_tails),
+      }
+    end
 
     @doc """
     Visualize the ropes current position.
@@ -39,16 +49,23 @@ defmodule Aoc2022.Day09 do
       T.....
     """
     def print(rope) do
-      {hx, hy} = rope.head
-      {tx, ty} = rope.tail
+      symbol = fn x, y ->
+        if {x, y} == rope.head do
+          "H"
+        else
+          tail = rope.tails
+            |> Enum.with_index()
+            |> Enum.find(fn {{tx, ty}, _} -> x == tx and y == ty end)
+
+          if tail != nil,
+            do: elem(tail, 1) + 1,
+          else: "."
+        end
+      end
 
       col = for y <- 0..4 do
         row = for x <- 0..5 do
-          case {x, y} do
-            {^hx, ^hy} -> "H"
-            {^tx, ^ty} -> "T"
-            _ -> "."
-          end
+          symbol.(x, y)
         end
         Enum.join(row, "")
       end
@@ -73,39 +90,41 @@ defmodule Aoc2022.Day09 do
   defp step_towards(p1, p2) when p1 >  p2, do: p1 - 1
 
   defp move(rope, dir) do
-    rope = rope
-      |> move_head(dir)
-      |> move_tail()
+    head = move_head(rope.head, dir)
+
+    {tails, _} = Enum.map_reduce(rope.tails, head, fn tail, head ->
+      tail = move_tail(head, tail)
+      {tail, tail}
+    end)
 
     %{rope |
-      hist: [rope.tail | rope.hist],
+      head: head,
+      tails: tails,
+      hist: [List.last(tails) | rope.hist],
     }
   end
 
-  defp move_head(rope, dir) do
-    {x, y} = rope.head
-
-    {x, y} = case dir do
+  defp move_head(head, dir) do
+    {x, y} = head
+    case dir do
       "U" -> {x, y+1}
       "D" -> {x, y-1}
       "R" -> {x+1, y}
       "L" -> {x-1, y}
     end
-
-    %{rope | head: {x, y}}
   end
 
-  defp move_tail(rope) do
-    {hx, hy} = rope.head
-    {tx, ty} = rope.tail
+  defp move_tail(head, tail) do
+    {hx, hy} = head
+    {tx, ty} = tail
 
     if touching?({hx, hy}, {tx, ty}) do
-      rope
+      tail
     else
-      %{rope | tail: {
+      {
         step_towards(tx, hx),
         step_towards(ty, hy),
-      }}
+      }
     end
   end
 
@@ -113,7 +132,7 @@ defmodule Aoc2022.Day09 do
     input
       |> format
       |> expand
-      |> Enum.reduce(%Rope{}, & move(&2, &1))
+      |> Enum.reduce(Rope.new(1), & move(&2, &1))
       |> Map.get(:hist)
       |> Enum.uniq()
       |> Enum.count()
@@ -125,6 +144,12 @@ defmodule Aoc2022.Day09 do
 
   def part_two(input) do
     input
+      |> format
+      |> expand
+      |> Enum.reduce(Rope.new(9), & move(&2, &1))
+      |> Map.get(:hist)
+      |> Enum.uniq()
+      |> Enum.count()
   end
 
 end

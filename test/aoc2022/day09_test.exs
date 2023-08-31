@@ -13,7 +13,7 @@ defmodule Aoc2022.Day09Test do
   end
 
   describe "part two" do
-    # assert Day09.part_two(@input) == 1
+    assert Day09.part_two(@input) == 2427
   end
 
 end
