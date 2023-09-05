@@ -32,7 +32,29 @@ defmodule Aoc2022.Day10 do
       |> Enum.reduce([{1, 1}], fn {op, v}, state ->
         execute(hd(state), op, v) ++ state
       end)
-      |> Enum.filter(fn {clk, reg} -> Enum.member?(siglist, clk) end)
+      |> Enum.filter(fn {clk, _} -> Enum.member?(signal, clk) end)
       |> Enum.reduce(0, fn {clk, reg}, acc -> acc + clk * reg end)
+  end
+
+  # --------------------------------------------------
+  # Part Two
+  # --------------------------------------------------
+
+  def part_two(input) do
+    input
+      |> format
+      |> Enum.reduce([{1, 1}], fn {op, v}, state ->
+        execute(hd(state), op, v) ++ state
+      end)
+      |> Enum.filter(& elem(&1, 0) <= 240)
+      |> Enum.sort_by(& elem(&1, 0))
+      |> Enum.map(fn {op, v} ->
+        if abs(rem(op, 40) - v - 1) <= 1,
+          do: "#",
+        else: "."
+      end)
+      |> Enum.chunk_every(40)
+      |> Enum.map(&Enum.join/1)
+      |> Enum.join("\n")
   end
 end
