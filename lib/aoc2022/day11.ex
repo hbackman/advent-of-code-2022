@@ -1,18 +1,18 @@
 defmodule Aoc2022.Day11 do
 
   defp format(input) do
-    input
-      |> String.split(~r/\R\R/)
+    String.split(input, ~r/\R\R/)
   end
 
   defmodule Monkey do
     defstruct [
       :monkey_id,
-      :worry_levels,
-      :worry_change,
-      :test,
+      :items,
+      :operation,
+      :divisible,
       :test_throw_true,
       :test_throw_false,
+      throws: 0,
     ]
 
     defp extract(input, regex, apply \\ nil) do
@@ -23,46 +23,53 @@ defmodule Aoc2022.Day11 do
     end
 
     def new(input) do
-      fmt_worry_levels = fn str ->
+      fmt_items = fn str ->
         str
           |> String.split(", ")
           |> Enum.map(&String.to_integer/1)
       end
 
       %__MODULE__{
-        monkey_id:        extract(input, ~r/Monkey (\d{1,})/, &String.to_integer/1),
-        worry_levels:     extract(input, ~r/Starting items: (.*)/, fmt_worry_levels),
-        worry_change:     extract(input, ~r/Operation: new = (.*)/),
-        test:             extract(input, ~r/Test: (.*)/),
+        monkey_id: extract(input, ~r/Monkey (\d{1,})/, &String.to_integer/1),
+        items:     extract(input, ~r/Starting items: (.*)/, fmt_items),
+        operation: extract(input, ~r/Operation: new = (.*)/),
+        divisible: extract(input, ~r/Test: divisible by (.*)/, &String.to_integer/1),
         test_throw_true:  extract(input, ~r/If true: throw to monkey (\d{1,})/, &String.to_integer/1),
         test_throw_false: extract(input, ~r/If false: throw to monkey (\d{1,})/, &String.to_integer/1),
       }
     end
   end
 
-  defp play(monkeys) do
-    IO.inspect monkeys
-    Enum.reduce(monkeys, monkeys, fn monkey, all ->
+  defp throw_item(monkeys, throw_from, throw_to, item) do
+    Enum.map(monkeys, fn
+      %{monkey_id: ^throw_from} = monkey -> %{monkey | items: List.delete_at(monkey.items, 0), throws: monkey.throws + 1}
+      %{monkey_id: ^throw_to}   = monkey -> %{monkey | items: monkey.items ++ [item]}
+      monkey -> monkey
+    end)
+  end
 
-      IO.puts "Monkey " <> to_string(monkey.monkey_id) <> ":"
+  defp play(monkeys, relief, turns) do
+    modulo = Enum.reduce(monkeys, 1, fn monkey, modulo ->
+      modulo * monkey.divisible
+    end)
 
-      # Inspect and throw item.
-      Enum.reduce(monkey.worry_levels, monkeys, fn worry, all ->
-        IO.puts "  Monkey inspects an item with a worry level of " <> to_string(worry)
-        #IO.puts "    Worry level is multiplied by "
-
-        worry = calculate_worry_level(monkey, worry)
-        throw = calculate_throw_target(monkey, worry)
-
-        IO.puts "    Item with worry level " <> to_string(worry) <> " is thrown to monkey " <> to_string(throw) <> "."
-
-        all
+    Enum.reduce(1..turns, monkeys, fn _, monkeys ->
+      Enum.reduce(Enum.map(monkeys, & &1.monkey_id), monkeys, fn monkey_id, monkeys ->
+        # Find monkey.
+        monkey = Enum.find(monkeys, & &1.monkey_id == monkey_id)
+  
+        # Throw items.
+        Enum.reduce(monkey.items, monkeys, fn worry, all ->
+          [worry, throw] = calc_throw(monkey, worry, relief, modulo)
+  
+          throw_item(all, monkey.monkey_id, throw, worry)
+        end)
       end)
     end)
   end
 
-  defp calculate_worry_level(monkey, worry) do
-    worry_string = monkey.worry_change
+  defp calc_throw(monkey, worry, relief, modulo) do
+    worry_string = monkey.operation
       |> String.replace("old", to_string(worry))
       |> String.replace(" ", "")
 
@@ -71,27 +78,22 @@ defmodule Aoc2022.Day11 do
       [a, "*", b] -> String.to_integer(a) * String.to_integer(b)
     end
 
-    IO.puts "    Worry level is increased to " <> to_string(worry)
+    worry = div(worry, relief)
+    worry = rem(worry, modulo)
 
-    worry = div(worry, 3)
-
-    IO.puts "    Monkey gets bored with item. Worry level is divided by 3 to " <> to_string(worry) <> "."
-
-    worry
-  end
-
-  defp calculate_throw_target(monkey, worry) do
-    divisor = Regex.run(~r/divisible by (\d{1,})/, monkey.test, capture: :all_but_first)
-      |> List.first()
-      |> String.to_integer()
-
-    IO.puts if rem(worry, divisor) == 0,
-      do: "    Current worry level is divisible by " <> to_string(divisor),
-    else: "    Current worry level is not divisible by " <> to_string(divisor)
-
-    if rem(worry, divisor) == 0,
+    throw = if rem(worry, monkey.divisible) == 0,
       do: monkey.test_throw_true,
     else: monkey.test_throw_false
+
+    [worry, throw]
+  end
+
+  defp calc_mbiz(monkeys) do
+    monkeys
+      |> Enum.map(&(&1.throws))
+      |> Enum.sort(&(&1 >= &2))
+      |> Enum.take(2)
+      |> Enum.product()
   end
 
   # --------------------------------------------------
@@ -102,8 +104,8 @@ defmodule Aoc2022.Day11 do
     input
       |> format
       |> Enum.map(&Monkey.new/1)
-      |> play
-      |> IO.inspect(charlists: :as_lists)
+      |> play(3, 20)
+      |> calc_mbiz()
   end
 
   # --------------------------------------------------
@@ -112,5 +114,9 @@ defmodule Aoc2022.Day11 do
 
   def part_two(input) do
     input
+      |> format
+      |> Enum.map(&Monkey.new/1)
+      |> play(1, 10000)
+      |> calc_mbiz()
   end
 end
