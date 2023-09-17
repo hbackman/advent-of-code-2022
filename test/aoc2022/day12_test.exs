@@ -9,7 +9,8 @@ defmodule Aoc2022.Day12Test do
     |> File.read!()
 
   describe "part one" do
-    IO.inspect Day12.part_one(@input)
+    #IO.inspect Day12.part_one(@input)
+    Day12.part_one(@input)
     # assert Day12.part_one(@input) == 182293
   end
 
