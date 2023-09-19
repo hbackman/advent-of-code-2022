@@ -20,6 +20,27 @@ defmodule Aoc2022.Day12 do
     {pos, map}
   end
 
+  defp print(map) do
+    IO.puts map
+      |> Enum.map(& Enum.join(&1, ""))
+      |> Enum.join("\n")
+  end
+
+  defp search(map, pos, epos, visited \\ []) do
+    if pos == epos do
+      {:found, visited}
+    else
+      neighbors(map, pos, visited)
+        |> Enum.map(fn next_pos ->
+          search(map, next_pos, epos, [pos | visited])
+        end)
+        |> List.flatten()
+    end
+  end
+
+  defp search({map, spos, epos}),
+    do: search(map, spos, epos)
+
   defp find_position(%Matrix{data: data}, target) do
     Enum.find_value(data, fn {y, row} ->
       Enum.find_value(row, fn {x, val} ->
@@ -30,17 +51,7 @@ defmodule Aoc2022.Day12 do
     end)
   end
 
-  defp search(map, pos, epos, visited \\ []) do
-    dirs = find_directions(map, pos)
-      |> Enum.filter(& Enum.member?(visited, &1) == false)
-
-    nil
-  end
-
-  defp search({map, spos, epos}),
-    do: search(map, spos, epos)
-
-  defp find_directions(map, {x, y}) do
+  defp neighbors(map, {x, y}, except \\ []) do
     directions = [
       {x, y-1},
       {x, y+1},
@@ -58,6 +69,7 @@ defmodule Aoc2022.Day12 do
         end
       end)
       |> Enum.map(& elem(&1, 0))
+      |> Enum.filter(& Enum.member?(except, &1) == false)
   end
 
   defp char_diff(a, b)
@@ -77,6 +89,10 @@ defmodule Aoc2022.Day12 do
     IO.inspect input
       |> format()
       |> search()
+      |> Enum.map(fn {:found, path} ->
+        Enum.count(path)
+      end)
+      |> Enum.min()
   end
 
   # --------------------------------------------------

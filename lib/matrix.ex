@@ -55,7 +55,7 @@ defmodule Matrix do
   Get a value from the matrix.
   """
   def get(matrix = %Matrix{}, x, y) do
-    matrix.data[x][y]
+    matrix.data[y][x]
   end
 
   def get(matrix = %Matrix{}, {x, y}),
