@@ -4,6 +4,8 @@ defmodule Matrix do
 
   defstruct [
     :data,
+    :w,
+    :h,
   ]
 
   @doc """
@@ -12,6 +14,8 @@ defmodule Matrix do
   def from_list(list) when is_list(list) do
     %__MODULE__{
       data: list_to_matrix(list),
+      w: Enum.count(List.first(list)),
+      h: Enum.count(list),
     }
   end
 

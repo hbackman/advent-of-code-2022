@@ -20,27 +20,6 @@ defmodule Aoc2022.Day12 do
     {pos, map}
   end
 
-  defp print(map) do
-    IO.puts map
-      |> Enum.map(& Enum.join(&1, ""))
-      |> Enum.join("\n")
-  end
-
-  defp search(map, pos, epos, visited \\ []) do
-    if pos == epos do
-      {:found, visited}
-    else
-      neighbors(map, pos, visited)
-        |> Enum.map(fn next_pos ->
-          search(map, next_pos, epos, [pos | visited])
-        end)
-        |> List.flatten()
-    end
-  end
-
-  defp search({map, spos, epos}),
-    do: search(map, spos, epos)
-
   defp find_position(%Matrix{data: data}, target) do
     Enum.find_value(data, fn {y, row} ->
       Enum.find_value(row, fn {x, val} ->
@@ -51,8 +30,8 @@ defmodule Aoc2022.Day12 do
     end)
   end
 
-  defp neighbors(map, {x, y}, except \\ []) do
-    directions = [
+  defp neighbors(map, {x, y}) do
+     [
       {x, y-1},
       {x, y+1},
       {x-1, y},
@@ -61,7 +40,7 @@ defmodule Aoc2022.Day12 do
         {pos, Matrix.get(map, pos)}
       end)
       |> Enum.filter(& elem(&1, 1))
-      |> Enum.filter(fn {pos, val} ->
+      |> Enum.filter(fn {_, val} ->
         case char_diff(val, Matrix.get(map, x, y)) do
           0 -> true
           1 -> true
@@ -69,7 +48,6 @@ defmodule Aoc2022.Day12 do
         end
       end)
       |> Enum.map(& elem(&1, 0))
-      |> Enum.filter(& Enum.member?(except, &1) == false)
   end
 
   defp char_diff(a, b)
@@ -81,6 +59,35 @@ defmodule Aoc2022.Day12 do
     a - b
   end
 
+  defp search(map, spos, epos) do
+    graph = :digraph.new()
+
+    IO.inspect {spos, epos}
+
+    wr = 0..(map.w-1)
+    hr = 0..(map.h-1)
+
+    # Add vertices.
+    for x <- wr, y <- hr do
+      :digraph.add_vertex(graph, {x, y})
+    end
+
+    # Add edges.
+    for x <- wr, y <- hr do
+      Enum.each(neighbors(map, {x, y}), fn pos ->
+        :digraph.add_edge(graph, {x, y}, pos)
+      end)
+    end
+
+    case :digraph.get_short_path(graph, spos, epos) do
+      false -> :not_found
+      path  -> length(path) - 1
+    end
+  end
+
+  defp search({map, spos, epos}),
+    do: search(map, spos, epos)
+
   # --------------------------------------------------
   # Part One
   # --------------------------------------------------
@@ -89,10 +96,6 @@ defmodule Aoc2022.Day12 do
     IO.inspect input
       |> format()
       |> search()
-      |> Enum.map(fn {:found, path} ->
-        Enum.count(path)
-      end)
-      |> Enum.min()
   end
 
   # --------------------------------------------------
