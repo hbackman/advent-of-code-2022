@@ -65,4 +65,14 @@ defmodule Matrix do
   def get(matrix = %Matrix{}, {x, y}),
     do: get(matrix, x, y)
 
+  @doc """
+  Get the x-axis range.
+  """
+  def x_range(matrix = %Matrix{}), do: 0..(matrix.w-1)
+
+  @doc """
+  Get the y-axis range.
+  """
+  def y_range(matrix = %Matrix{}), do: 0..(matrix.h-1)
+
 end

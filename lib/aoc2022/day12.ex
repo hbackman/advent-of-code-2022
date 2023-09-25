@@ -31,7 +31,7 @@ defmodule Aoc2022.Day12 do
   end
 
   defp neighbors(map, {x, y}) do
-     [
+    [
       {x, y-1},
       {x, y+1},
       {x-1, y},
@@ -41,20 +41,14 @@ defmodule Aoc2022.Day12 do
       end)
       |> Enum.filter(& elem(&1, 1))
       |> Enum.filter(fn {_, val} ->
-        case char_diff(val, Matrix.get(map, x, y)) do
-          0 -> true
-          1 -> true
-          _ -> false
-        end
+        diff = char_diff(val, Matrix.get(map, x, y))
+        diff <= 1
       end)
       |> Enum.map(& elem(&1, 0))
   end
 
-  defp char_diff(a, b)
-    when byte_size(a) == 1
-     and byte_size(b) == 1
-  do
-    a = a |> to_charlist |> hd 
+  defp char_diff(a, b) when byte_size(a) == 1 and byte_size(b) == 1 do
+    a = a |> to_charlist |> hd
     b = b |> to_charlist |> hd
     a - b
   end
@@ -62,10 +56,8 @@ defmodule Aoc2022.Day12 do
   defp search(map, spos, epos) do
     graph = :digraph.new()
 
-    IO.inspect {spos, epos}
-
-    wr = 0..(map.w-1)
-    hr = 0..(map.h-1)
+    wr = Matrix.x_range(map)
+    hr = Matrix.y_range(map)
 
     # Add vertices.
     for x <- wr, y <- hr do
@@ -79,10 +71,15 @@ defmodule Aoc2022.Day12 do
       end)
     end
 
-    case :digraph.get_short_path(graph, spos, epos) do
+    # Find path.
+    length = case :digraph.get_short_path(graph, spos, epos) do
       false -> :not_found
       path  -> length(path) - 1
     end
+
+    :digraph.delete(graph)
+
+    length
   end
 
   defp search({map, spos, epos}),
@@ -93,7 +90,7 @@ defmodule Aoc2022.Day12 do
   # --------------------------------------------------
 
   def part_one(input) do
-    IO.inspect input
+    input
       |> format()
       |> search()
   end
@@ -102,7 +99,28 @@ defmodule Aoc2022.Day12 do
   # Part Two
   # --------------------------------------------------
 
+  defp search2(map, _spos, epos) do
+    wr = Matrix.x_range(map)
+    hr = Matrix.y_range(map)
+
+    points =
+      for x <- wr, y <- hr,
+        do: {{x, y}, Matrix.get(map, x, y)}
+
+    points
+      |> Enum.filter(& elem(&1, 1) == "a")
+      |> Enum.map(& elem(&1, 0))
+      |> Enum.map(& search(map, &1, epos))
+      |> Enum.reject(& &1 == :not_found)
+      |> Enum.min()
+  end
+
+  defp search2({map, spos, epos}),
+    do: search2(map, spos, epos)
+
   def part_two(input) do
     input
+      |> format()
+      |> search2()
   end
 end
